@@ -127,7 +127,7 @@ project-root/
 
 Example GET response:
 
-``json
+```json
 [
   {“id”:1,“name”:“Jetfire”},
   {“id”:27,“name”:“Oldmobile”}
