@@ -18,7 +18,7 @@ include_directories(
 
 file(GLOB SOURCES src/*.cpp)
 
-add_executable(${PROJECT_NAME} WIN32 ${SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
       Boost::system

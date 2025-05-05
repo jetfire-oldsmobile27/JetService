@@ -10,6 +10,7 @@ namespace jetfire27::Engine::Test {
     class TestServer {
     public:
         TestServer(unsigned short port, const std::string& dbPath);
+        ~TestServer();
         void Run();
         void Stop();
 
@@ -19,6 +20,7 @@ namespace jetfire27::Engine::Test {
         unsigned short port_;
         jetfire27::Engine::DB::SQLiteDB db_;
         boost::asio::io_context ioc_;
+        boost::asio::ip::tcp::acceptor acceptor_;
     };
 
 }

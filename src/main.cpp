@@ -1,19 +1,27 @@
-#include <winsock2.h>    // ← обязательно первым!
-#include <ws2tcpip.h>
-#include <windows.h>
-#include <shellapi.h>
-#pragma comment(lib, "shell32.lib")
+// src/main.cpp
 
-#include "TestServer.h"
+#include <cstdio>
 #include <thread>
+#include "testserver.h"    // имя файла в lowercase
 
+// Выбор backend для tray.h
 #if defined(_WIN32) || defined(_WIN64)
-  #define TRAY_WINAPI 1
+#  define TRAY_WINAPI 1
+#elif defined(__linux__)
+#  define TRAY_APPINDICATOR 1
+#elif defined(__APPLE__)
+#  define TRAY_APPKIT 1
 #endif
 
-#if TRAY_WINAPI
-  #define TRAY_ICON1 "assets/icon.ico"
-  #define TRAY_ICON2 "assets/icon.ico"
+#if TRAY_APPINDICATOR
+#  define TRAY_ICON1 "indicator-messages"
+#  define TRAY_ICON2 "indicator-messages-new"
+#elif TRAY_APPKIT
+#  define TRAY_ICON1 "icon.png"
+#  define TRAY_ICON2 "icon.png"
+#elif TRAY_WINAPI
+#  define TRAY_ICON1 "assets/icon.ico"
+#  define TRAY_ICON2 "assets/icon.ico"
 #endif
 
 #include "../thirdparty/tray.h"  
@@ -23,40 +31,32 @@ static std::thread*                         g_thread = nullptr;
 
 static void status_cb(struct tray_menu* item) {
     (void)item;
-    MessageBoxA(nullptr, "Сервер запущен", "jetfire27 Engine", MB_OK);
+    std::printf("[Tray] Service launch\n");
 }
 
 static void restart_cb(struct tray_menu* item) {
     (void)item;
-    MessageBoxA(nullptr, "Перезапуск сервера...", "jetfire27 Engine", MB_OK);
-
+    std::printf("[Tray] Restart service...\n");
     g_server->Stop();
     if (g_thread->joinable()) g_thread->join();
     delete g_thread;
     delete g_server;
-
     g_server = new jetfire27::Engine::Test::TestServer(8080, "test.db");
-    g_thread = new std::thread(&jetfire27::Engine::Test::TestServer::Run, g_server);
-
-    MessageBoxA(nullptr, "Сервер перезапущен", "jetfire27 Engine", MB_OK);
+    g_thread  = new std::thread(&jetfire27::Engine::Test::TestServer::Run, g_server);
+    std::printf("[Tray] Service restarted\n");
 }
 
 static void quit_cb(struct tray_menu* item) {
     (void)item;
-    g_server->Stop();
-    if (g_thread->joinable()) g_thread->join();
-    delete g_thread;
-    delete g_server;
-
     tray_exit();
 }
 
 static struct tray_menu g_menu[] = {
-    { (char*)"Посмотреть статус", 0, 0, status_cb, nullptr, nullptr },
-    { (char*)"Перезапуск",         0, 0, restart_cb, nullptr, nullptr },
-    { (char*)"-",                 0, 0, nullptr,     nullptr, nullptr }, 
-    { (char*)"Выйти",             0, 0, quit_cb,    nullptr, nullptr },
-    { nullptr,                    0, 0, nullptr,     nullptr, nullptr }  
+    { (char*)"Посмотреть статус", 0, 0, status_cb,  NULL, NULL },
+    { (char*)"Перезапуск",        0, 0, restart_cb, NULL, NULL },
+    { (char*)"-",                 0, 0, NULL,       NULL, NULL },  
+    { (char*)"Выйти",             0, 0, quit_cb,    NULL, NULL },
+    { NULL,                       0, 0, NULL,       NULL, NULL }   
 };
 
 static struct tray g_tray = {
@@ -64,25 +64,26 @@ static struct tray g_tray = {
     g_menu
 };
 
-int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
+int main(int argc, char** argv) {
+    (void)argc; (void)argv;
+
     g_server = new jetfire27::Engine::Test::TestServer(8080, "test.db");
     g_thread = new std::thread(&jetfire27::Engine::Test::TestServer::Run, g_server);
 
     if (tray_init(&g_tray) < 0) {
-        MessageBoxA(nullptr, "Не удалось инициализировать трей", 
-                    "jetfire27 Engine", MB_ICONERROR);
+        std::fprintf(stderr, "Ошибка: не удалось инициализировать трей-иконку\n");
         g_server->Stop();
-        if (g_thread->joinable()) g_thread->join();
+        if (g_thread->joinable()) {g_thread->join();};
         delete g_thread;
         delete g_server;
         return 1;
     }
 
-    while (tray_loop(1) == 0) {}
+    while (tray_loop(1) == 0) {
+    }
     g_server->Stop();
-    if (g_thread->joinable()) g_thread->join();
+    if (g_thread->joinable()) {g_thread->join();};
     delete g_thread;
     delete g_server;
-
     return 0;
 }

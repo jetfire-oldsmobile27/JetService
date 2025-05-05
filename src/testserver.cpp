@@ -36,7 +36,7 @@ namespace jetfire27::Engine::JsonParser {
 }
 
 TestServer::TestServer(unsigned short port, const std::string& dbPath)
-    : port_(port), db_(dbPath)
+    : port_(port), db_(dbPath), ioc_(), acceptor_{ioc_, {tcp::v4(), port_}}
 {
     db_.Execute(
       "CREATE TABLE IF NOT EXISTS test ("
@@ -45,16 +45,23 @@ TestServer::TestServer(unsigned short port, const std::string& dbPath)
     );
 }
 
+TestServer::~TestServer() { Stop(); }
+
 void TestServer::Run() {
-    tcp::acceptor acceptor{ioc_, {tcp::v4(), port_}};
-    for (;;) {
-        tcp::socket sock{ioc_};
-        acceptor.accept(sock);
-        HandleSession(std::move(sock));
+    try {
+        for (;;) {
+            tcp::socket sock{ioc_};
+            acceptor_.accept(sock);            // ← теперь член, можно его закрыть!
+            HandleSession(std::move(sock));
+        }
+    } catch (const std::exception& e) {
+        std::fprintf(stderr, "Server stopped critical: %s\n", e.what());
     }
 }
 
 void TestServer::Stop() {
+    boost::system::error_code ec;
+    acceptor_.close(ec);
     ioc_.stop();
 }
 
@@ -69,7 +76,7 @@ void TestServer::HandleSession(tcp::socket socket) {
     res.keep_alive(req.keep_alive());
 
     if (req.method() == http::verb::get && req.target() == "/items") {
-        // Callback в стиле C для sqlite3_exec
+        // C-style callback for sqlite3_exec
         struct CB { static int f(void* d,int c,char**v,char**){
             auto vec = static_cast<std::vector<TestRecord>*>(d);
             vec->push_back({ std::stoi(v[0]), v[1] });
@@ -78,7 +85,7 @@ void TestServer::HandleSession(tcp::socket socket) {
         std::vector<TestRecord> vec;
         db_.Execute("SELECT id,name FROM test;", CB::f, &vec);
 
-        // Явно создаём парсер, чтобы избежать синтаксического совпадения шаблона с функцией :contentReference[oaicite:11]{index=11}
+        // avoid match with:contentReference[oaicite:11]{index=11}
         jetfire27::Engine::JsonParser::Parser<TestRecord> parser;
         json::array arr;
         for (auto& r : vec) {
