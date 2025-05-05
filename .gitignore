@@ -1,3 +1,7 @@
+# Build Cache & Test env
+build
+CMakeUserPresets.json
+*.db
 # Prerequisites
 *.d
 
