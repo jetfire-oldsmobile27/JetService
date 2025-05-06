@@ -51,7 +51,7 @@ void TestServer::Run() {
     try {
         for (;;) {
             tcp::socket sock{ioc_};
-            acceptor_.accept(sock);            // ← теперь член, можно его закрыть!
+            acceptor_.accept(sock);           
             HandleSession(std::move(sock));
         }
     } catch (const std::exception& e) {
