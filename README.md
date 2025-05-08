@@ -34,6 +34,7 @@ project-root/
 │ ├─── SQLiteDB.h
 │ ├─── Parser.h
 │ ├──── Daemonizer.h
+│ ├──── Logger.h
 │ ├─── TestRecord.h
 │ └─── TestServer.h
 ├─── src/
@@ -41,6 +42,7 @@ project-root/
 │ ├──── SQLiteDB.cpp
 │ ├─── Parser.cpp
 │ ├──── Daemonizer.cpp
+│ ├──── Logger.h
 │ ├─── TestServer.cpp
 │ └─── main.cpp
 └─── thirdparty/
@@ -91,6 +93,111 @@ project-root/
 * `tray_init(&tray)`, `tray_loop(blocking)`, `tray_exit()`.
 * Context menu is specified via the `struct tray_menu[]` array.
 * Supports Windows (WinAPI), Linux (AppIndicator/Gtk), macOS (AppKit).
+
+### 7. Logger (spdlog based)
+
+The logger is implemented using the [spdlog](https://github.com/gabime/spdlog) library and provides:
+- Time rotation of logs (daily)
+- Automatic creation of directories for logs
+- Writing to OS-specific system directories
+- Multi-threaded security
+
+### Features
+#### 1. Initialization
+```cpp
+// main.cpp
+jetfire27::Engine::Logging::Logger::GetInstance()
+    .Initialize(GetLogDirectory());
+```
+
+##### 2. Storage paths
+| OS       | Path                                      |
+|----------|-------------------------------------------|
+| Windows  | `%APPDATA%\JetService\logs\`             |
+| macOS    | `~/Library/Logs/JetService/`             |
+| Linux    | `~/.local/share/JetService/logs/`        |
+
+Files are named: `jet_service_YYYY-MM-DD.log`.
+
+##### 3. Logging levels
+```cpp
+logger_->set_level(spdlog::level::info); // Defaults.
+```
+Supported levels:  
+`trace`, `debug`, `info`, `warn`, `error`, `critical`.
+
+#### 4. Usage example
+```cpp
+#include “logger.h”
+
+// Information message
+Logger::GetInstance().Info(“User {} logged in”, user_id);
+
+// Error with exception
+try {
+    db.Execute(query);
+} catch (const std::exception& e) {
+    Logger::GetInstance().Error(“DB error: {}”, e.what();
+}
+```
+
+### Settings and customization
+
+### 1. Changing the logging level
+```cpp
+// logger.cpp
+logger_->set_level(spdlog::level::debug); // For debugging
+```
+
+### Log rotation
+Default:
+- New file every day at 00:00
+- Storage: indefinitely
+
+To change:
+```cpp.
+// daily_logger_mt(name, filename, hour, minute)
+logger_ = spdlog::daily_logger_mt(“logger”, path, 23, 59);
+```
+
+Standard format:
+```
+[2025-11-15 14:32:01.123] [info] Message text
+```
+
+For customization:
+```cpp
+logger_->set_pattern(“[%H:%M:%S] [%l] %v”);
+```
+
+## Dependencies
+1. requires C++17 (for ``<filesystem>``)
+2. spdlog library (v1.x+)
+3. linking to spdlog at compile time
+
+## Best Practices
+1. use different levels of logging:
+   - `Info` for basic events
+   - `Debug` for debug information
+   - `Error` for recoverable errors
+   - `Critical` for fatal errors.
+
+2. avoid:
+   ```cpp
+   // Bad (formatting in code)
+   Logger::Info("Value: ” + std::to_string(value));
+   
+   // Good (use spdlog formatting)
+   Logger::Info(“Value: {}”, value);
+   ```
+
+3. For highly loaded sections:
+   ```cpp
+   if (Logger::GetInstance().IsDebug()) {
+       // Heavy calculations only when debug is enabled
+       Logger::Debug("Data: {}”, heavyCalculation());
+   }
+   ```
 
 ---
 

@@ -2,6 +2,8 @@
 build
 CMakeUserPresets.json
 *.db
+show-files.sh
+
 # Prerequisites
 *.d
 

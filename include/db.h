@@ -1,4 +1,5 @@
 #pragma once
+#include "logger.h"
 #include <string>
 #include <sqlite3.h>
 

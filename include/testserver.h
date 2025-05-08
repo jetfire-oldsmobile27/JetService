@@ -1,4 +1,5 @@
 #pragma once
+#include "logger.h"
 #include "db.h"
 #include "parser.h"
 #include "restclient.h"

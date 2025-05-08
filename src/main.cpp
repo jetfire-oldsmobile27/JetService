@@ -5,7 +5,8 @@
 #include <optional>
 #include <string>
 
-
+#include "logger.h"
+#include "../thirdparty/tray.h"  
 #include "testserver.h" 
 #include "daemonizer.h"   
 
@@ -27,8 +28,6 @@
 #  define TRAY_ICON1 "assets/icon.ico"
 #  define TRAY_ICON2 "assets/icon.ico"
 #endif
-
-#include "../thirdparty/tray.h"  
 
 using jetfire27::Engine::Test::TestServer;
 
@@ -97,14 +96,38 @@ std::string getExecutablePath() {
 #endif
 }
 
+std::string GetLogDirectory() {
+    std::string path;
+#ifdef _WIN32
+    char appdata[MAX_PATH];
+    if (SUCCEEDED(SHGetFolderPathA(nullptr, CSIDL_APPDATA, nullptr, 0, appdata))) {
+        path = std::string(appdata) + "\\JetService\\logs\\";
+    }
+#elif __APPLE__
+    char* home = getenv("HOME");
+    if (home) {
+        path = std::string(home) + "/Library/Logs/JetService/";
+    }
+#else
+    char* home = getenv("HOME");
+    if (home) {
+        path = std::string(home) + "/.local/share/JetService/logs/";
+    }
+#endif
+    return path;
+}
+
 int main(int /*argc*/, char** /*argv*/) {
+    jetfire27::Engine::Logging::Logger::GetInstance().Initialize(GetLogDirectory());
+    jetfire27::Engine::Logging::Logger::Logger::GetInstance().Info("Application started");
+    
     if (!jetfire27::Engine::Daemonizer::IsSingleInstance()) {
-        std::cerr << "Already running\n";
+        jetfire27::Engine::Logging::Logger::GetInstance().Error("Another instance is already running");
         return 1;
     }
 
     jetfire27::Engine::Daemonizer::Setup(getExecutablePath(), jetfire27::Engine::Mode::Service);
-    start_server();
+    //start_server();
     
     if (tray_init(&g_tray) < 0) {
         std::fprintf(stderr, "Error: cannot initialize tray icon\n");
