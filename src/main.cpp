@@ -1,9 +1,13 @@
 #include <cstdio>
+#include <iostream>
 #include <thread>
 #include <memory>
 #include <optional>
+#include <string>
 
-#include "testserver.h"    
+
+#include "testserver.h" 
+#include "daemonizer.h"   
 
 #if defined(_WIN32) || defined(_WIN64)
 #  define TRAY_WINAPI 1
@@ -77,9 +81,32 @@ static struct tray g_tray = {
     g_menu
 };
 
-int main(int /*argc*/, char** /*argv*/) {
-    start_server();
+std::string getExecutablePath() {
+#ifdef _WIN32
+    char path[MAX_PATH];
+    GetModuleFileNameA(nullptr, path, MAX_PATH);
+    return std::string(path);
+#elif __APPLE__ || __linux__
+    char path[4096];
+    ssize_t len = readlink("/proc/self/exe", path, sizeof(path)-1);
+    if (len != -1) {
+        path[len] = '\0';
+        return std::string(path);
+    }
+    return {};
+#endif
+}
 
+int main(int /*argc*/, char** /*argv*/) {
+    if (!jetfire27::Engine::Daemonizer::IsSingleInstance()) {
+        std::cerr << "Already running\n";
+        return 1;
+    }
+
+    jetfire27::Engine::Daemonizer::Setup(getExecutablePath(), jetfire27::Engine::Mode::Service);
+    
+    start_server();
+    
     if (tray_init(&g_tray) < 0) {
         std::fprintf(stderr, "Error: cannot initialize tray icon\n");
         stop_server();

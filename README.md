@@ -33,14 +33,14 @@ project-root/
 │ ├──── RestClient.h
 │ ├─── SQLiteDB.h
 │ ├─── Parser.h
-│ ├──── Demonizer.h
+│ ├──── Daemonizer.h
 │ ├─── TestRecord.h
 │ └─── TestServer.h
 ├─── src/
 │ ├──── RestClient.cpp
 │ ├──── SQLiteDB.cpp
 │ ├─── Parser.cpp
-│ ├──── Demonizer.cpp
+│ ├──── Daemonizer.cpp
 │ ├─── TestServer.cpp
 │ └─── main.cpp
 └─── thirdparty/
@@ -71,7 +71,7 @@ project-root/
   * `T UnMarshall(const std::string&)`
 * An example of specialization for `TestRecord` is shown in `TestServer.cpp`.
 
-### 4. Demonizer (`jetfire27::Engine::Demonizer`)
+### 4. Daemonizer (`jetfire27::Engine::Daemonizer`)
 
 * `Setup(binPath, Mode)` method:
 
@@ -135,6 +135,14 @@ Example GET response:
 ```
 
 ---
+
+## How to remove force JetService?
+
+| OS | Service Search | Termination |
+| ----------- | ----------------------------- | -------------------------------------------- |
+| **Linux** | `systemctl status jetservice` | `systemctl stop jetservice` |
+| **macOS** | `launchctl list` | `launchctl remove jetservice` |
+| **Windows** | `sc query jetservice` | `sc stop jetservice && sc delete jetservice` | |
 
 ## License
 

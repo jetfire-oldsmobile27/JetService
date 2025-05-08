@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Boost 1.87.0 CONFIG REQUIRED COMPONENTS system filesystem json)
 find_package(SQLite3 CONFIG REQUIRED)
+find_package(spdlog REQUIRED)
 
 include_directories(
     include 
@@ -25,4 +26,5 @@ target_link_libraries(${PROJECT_NAME}
       Boost::filesystem
       Boost::json
       SQLite::SQLite3
+      spdlog::spdlog
 )
