@@ -36,10 +36,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Установка Conan
-      uses: conan-io/setup-conan@v1
-      with:
-        version: latest
+    - name: Установка conan клиента
+      uses: conan-io/setup-conan@v1.0.0
 
     - name: Установка зависимостей через Conan
       run: |
