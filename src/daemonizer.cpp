@@ -22,10 +22,8 @@ namespace {
 #endif
 }
 
-// ==========================
-// Setup
-// ==========================
 void Daemonizer::Setup(const std::string& binPath, Mode mode) {
+    jetfire27::Engine::Logging::Logger::GetInstance().Info("Configuring daemon mode: {}", static_cast<int>(mode));
 #ifdef _WIN32
     if (mode == Mode::AutoStart) {
         HKEY hKey;
@@ -52,7 +50,6 @@ void Daemonizer::Setup(const std::string& binPath, Mode mode) {
     );
 
     if (!hService) {
-        // Service may already exist
         hService = OpenServiceA(hSCManager, SERVICE_NAME, SERVICE_ALL_ACCESS);
         if (hService) {
             ChangeServiceConfigA(hService,
@@ -107,9 +104,6 @@ void Daemonizer::Setup(const std::string& binPath, Mode mode) {
 #endif
 }
 
-// ==========================
-// Remove
-// ==========================
 void Daemonizer::Remove(Mode mode) {
 #ifdef _WIN32
     if (mode == Mode::AutoStart) {

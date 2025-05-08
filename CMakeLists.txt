@@ -4,6 +4,7 @@ project(JetService LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(Boost 1.86 CONFIG REQUIRED COMPONENTS system filesystem json)
 find_package(SQLite3 CONFIG REQUIRED)

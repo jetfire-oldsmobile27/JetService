@@ -29,6 +29,20 @@
 #  define TRAY_ICON2 "assets/icon.ico"
 #endif
 
+#ifdef TRAY_WINAPI
+static inline void tray_exit() {
+    PostQuitMessage(0);
+}
+#elif defined(TRAY_APPKIT)
+static inline void tray_exit() {
+    exit(0);
+}
+#elif defined(TRAY_APPINDICATOR)
+static inline void tray_exit() {
+    gtk_main_quit();
+}
+#endif
+
 using jetfire27::Engine::Test::TestServer;
 
 static std::unique_ptr<TestServer>  g_server;
@@ -119,7 +133,7 @@ std::string GetLogDirectory() {
 
 int main(int /*argc*/, char** /*argv*/) {
     jetfire27::Engine::Logging::Logger::GetInstance().Initialize(GetLogDirectory());
-    jetfire27::Engine::Logging::Logger::Logger::GetInstance().Info("Application started");
+    jetfire27::Engine::Logging::Logger::GetInstance().Info("Application started");
     
     if (!jetfire27::Engine::Daemonizer::IsSingleInstance()) {
         jetfire27::Engine::Logging::Logger::GetInstance().Error("Another instance is already running");

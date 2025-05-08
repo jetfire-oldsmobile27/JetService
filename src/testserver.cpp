@@ -7,6 +7,8 @@
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/json.hpp>
+#include <fmt/format.h>
+#include <boost/asio/ip/tcp.hpp>
 
 namespace asio  = boost::asio;
 namespace beast = boost::beast;
@@ -16,6 +18,18 @@ using   tcp    = asio::ip::tcp;
 
 using jetfire27::Engine::Test::TestServer;
 using jetfire27::Engine::Test::TestRecord;
+
+namespace fmt {
+template <>
+struct formatter<boost::asio::ip::tcp::endpoint> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+    
+    template <typename FormatContext>
+    auto format(const boost::asio::ip::tcp::endpoint& ep, FormatContext& ctx) const {
+        return format_to(ctx.out(), "{}:{}", ep.address().to_string(), ep.port());
+    }
+};
+} // namespace fmt
 
 namespace jetfire27::Engine::JsonParser {
     template<>
@@ -38,11 +52,19 @@ namespace jetfire27::Engine::JsonParser {
 TestServer::TestServer(unsigned short port, const std::string& dbPath)
     : port_(port), db_(dbPath), ioc_(), acceptor_{ioc_, {tcp::v4(), port_}}
 {
-    db_.Execute(
-      "CREATE TABLE IF NOT EXISTS test ("
-      "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-      "name TEXT NOT NULL);"
-    );
+    
+
+    try {
+        db_.Execute(
+            "CREATE TABLE IF NOT EXISTS test ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "name TEXT NOT NULL);"
+        );
+        jetfire27::Engine::Logging::Logger::GetInstance().Info("Initialized TestServer on port {}", port);
+    } catch (const std::exception& e) {
+        jetfire27::Engine::Logging::Logger::GetInstance().Error("DB error: {}", e.what());
+        throw;
+    }
 }
 
 TestServer::~TestServer() { Stop(); }
@@ -66,6 +88,8 @@ void TestServer::Stop() {
 }
 
 void TestServer::HandleSession(tcp::socket socket) {
+    const auto& ep = socket.remote_endpoint();
+    jetfire27::Engine::Logging::Logger::GetInstance().Info("New connection from {}:{}", ep.address().to_string(), ep.port());
     beast::tcp_stream stream(std::move(socket));
     beast::flat_buffer buf;
     http::request<http::string_body> req;

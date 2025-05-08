@@ -12,14 +12,14 @@ public:
     static Logger& GetInstance();
     void Initialize(const std::string& logDirectory);
 
-    template<typename... Args>
-    void Info(const std::string& fmt, const Args&... args) {
-        logger_->info(fmt, args...);
+    template <typename... Args>
+    void Info(fmt::format_string<Args...> fmt, Args&&... args) {
+        logger_->info(fmt, std::forward<Args>(args)...);
     }
 
-    template<typename... Args>
-    void Error(const std::string& fmt, const Args&... args) {
-        logger_->error(fmt, args...);
+    template <typename... Args>
+    void Error(fmt::format_string<Args...> fmt, Args&&... args) {
+        logger_->error(fmt, std::forward<Args>(args)...);
     }
 
 private:

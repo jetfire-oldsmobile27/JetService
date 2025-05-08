@@ -29,6 +29,6 @@ void SQLiteDB::Execute(const std::string& sql,
     if (sqlite3_exec(db, sql.c_str(), callback, data, &err) != SQLITE_OK) {
         std::string e{err};
         sqlite3_free(err);
-        throw std::runtime_error(e);
+        throw std::runtime_error("SQL error: " + e);
     }
 }
