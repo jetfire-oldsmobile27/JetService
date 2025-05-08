@@ -104,7 +104,6 @@ int main(int /*argc*/, char** /*argv*/) {
     }
 
     jetfire27::Engine::Daemonizer::Setup(getExecutablePath(), jetfire27::Engine::Mode::Service);
-    
     start_server();
     
     if (tray_init(&g_tray) < 0) {

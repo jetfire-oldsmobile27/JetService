@@ -1,5 +1,5 @@
-#include "TestServer.h"
-#include "TestRecord.h"
+#include "testserver.h"
+#include "testrecord.h"
 
 #include <boost/asio.hpp>
 #include <boost/asio/ip/tcp.hpp>
