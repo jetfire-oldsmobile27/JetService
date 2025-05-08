@@ -1,0 +1,62 @@
+name: CMake + Conan CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        build_type: [Release]
+        c_compiler: [gcc, clang, cl]
+        include:
+          - os: windows-latest
+            c_compiler: cl
+            cpp_compiler: cl
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+          - os: ubuntu-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+        exclude:
+          - os: windows-latest
+            c_compiler: gcc
+          - os: windows-latest
+            c_compiler: clang
+          - os: ubuntu-latest
+            c_compiler: cl
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Установка Conan
+      uses: conan-io/setup-conan@v1
+      with:
+        version: latest
+
+    - name: Установка зависимостей через Conan
+      run: |
+        conan install . --output-folder=build --build=missing \
+          -s build_type=${{ matrix.build_type }} \
+          -s compiler=${{ matrix.c_compiler }}
+
+    - name: Настройка CMake
+      run: |
+        cmake -B build -S . \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+
+    - name: Сборка проекта
+      run: cmake --build build --config ${{ matrix.build_type }}
+
+    - name: Запуск тестов
+      working-directory: build
+      run: ctest --build-config ${{ matrix.build_type }}
