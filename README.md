@@ -174,6 +174,7 @@ logger_->set_pattern(“[%H:%M:%S] [%l] %v”);
 1. requires C++17 (for ``<filesystem>``)
 2. spdlog library (v1.x+)
 3. linking to spdlog at compile time
+4. or just use conanfile.py to install&find all libs!
 
 ## Best Practices
 1. use different levels of logging:
