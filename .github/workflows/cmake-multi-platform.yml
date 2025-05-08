@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        build_type: [Release]
+        build_type: [Release, Debug]
         c_compiler: [gcc, clang, cl]
         include:
           - os: windows-latest
@@ -36,25 +36,29 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Установка conan клиента
-      uses: conan-io/setup-conan@v1.0.0
+    - name: Установка Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Установка Conan
+      run: pip install conan==2.16.1
+
+    - name: Инициализация Conan
+      run: conan profile detect --force
 
     - name: Установка зависимостей через Conan
       run: |
-        conan install . --output-folder=build --build=missing \
+        conan install . \
+          --output-folder=build \
+          --build=missing \
           -s build_type=${{ matrix.build_type }} \
           -s compiler=${{ matrix.c_compiler }}
 
-    - name: Настройка CMake
+    - name: Сборка проекта с использованием CMake Presets
       run: |
-        cmake -B build -S . \
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
-          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-
-    - name: Сборка проекта
-      run: cmake --build build --config ${{ matrix.build_type }}
+        cmake --preset conan-${{ matrix.build_type | lower }}
+        cmake --build --preset conan-${{ matrix.build_type | lower }}
 
     - name: Запуск тестов
-      working-directory: build
-      run: ctest --build-config ${{ matrix.build_type }}
+      run: ctest --preset conan-${{ matrix.build_type | lower }}
